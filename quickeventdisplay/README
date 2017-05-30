@@ -1,0 +1,6 @@
+Designed for use with analysistree. To view an event pass the root file containing the analysistree and the C file (quickeventdisplay.C or quickeventdisplay3d.C) and the rest should be taken care of.
+
+The default variables are
+track: pandoraCosmicKHit
+vertex: pandoraCosmic
+but these can be changed by a simple find and replace.
