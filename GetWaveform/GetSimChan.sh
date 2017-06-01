@@ -1,0 +1,12 @@
+INPUT_FILE=$1
+OUTPUT_FILE=$2
+G4PRODUCER="largeant"
+
+RUN=1
+EVENT=1
+CHANNEL=$3
+
+make all
+./GetSimChan "$INPUT_FILE" "$OUTPUT_FILE" "$G4PRODUCER" "$RUN" "$EVENT" "$CHANNEL"
+
+rm GetSimChan

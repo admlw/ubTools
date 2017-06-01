@@ -1,4 +1,4 @@
-#include "GetWaveform.h"
+#include "GetSimChan.h"
 
 TH1D* average(TH1* h, TH1D* hAverage, int binSize){
     int counter = 0;
@@ -19,8 +19,8 @@ TH1D* average(TH1* h, TH1D* hAverage, int binSize){
 
 int main(int argv, char** argc){
 
-    TString wcRawDProducer(argc[3]);
-    art::InputTag wcRawDTag {wcRawDProducer};
+    TString SimChanProducer("largeant");
+    art::InputTag SimChanTag {SimChanProducer};
 
     int binSize = 10;
 
@@ -48,10 +48,10 @@ int main(int argv, char** argc){
     int selectedEvent = atoi(argc[5]);
     int selectedChannel = atoi(argc[6]);
 
-    TH1D* waveform = new TH1D("waveform", "", 6400, 0, 6400);
+    TH1D* waveform = new TH1D("waveform", "", 9594, 0, 9594);
     TH1* frqspace = 0;
-    TH1D* hAverage = new TH1D("hAverage", "", 6400/binSize, 0, 6400);
-    TH1D* ADCs = new TH1D("ADCs", "", 400, -200, 200);
+    TH1D* hAverage = new TH1D("hAverage", "", 9594/binSize, 0, 9594);
+    TH1D* nElectrons = new TH1D("nElectrons", "", 400, -20000, 20000);
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -66,39 +66,59 @@ int main(int argv, char** argc){
 
         if (selectedRun != run || selectedEvent != event) continue;
 
-        const auto& rawDHandle = ev.getValidHandle< std::vector<raw::RawDigit> >(wcRawDTag);
+        const auto& simChHandle = ev.getValidHandle< std::vector<sim::SimChannel> >(SimChanTag);
 
-        for (auto const& rawD : (*rawDHandle)){
+        for (auto const& simCh : (*simChHandle)){
 
-            int channel = rawD.Channel();
+            int channel = simCh.Channel();
 
             if (selectedChannel != channel) continue;
 
             TString chanNo = Form("TimeWfm_channel%i", channel);
             waveform->SetName(chanNo);
 
-            for (size_t i = 0; i < 6400; i++){
-                waveform->SetBinContent(i, rawD.ADC(i)-rawD.GetPedestal());
-                ADCs->Fill(rawD.ADC(i)-rawD.GetPedestal());
+            auto const& tdcidemap = simCh.TDCIDEMap();
+            double nElecs[(int)tdcidemap.size()];
+            unsigned short tdc[(int)tdcidemap.size()];
+            int i = 0;
+
+            for (auto timeSlice : tdcidemap){
+                
+                tdc[i] = timeSlice.first;
+                const std::vector<sim::IDE> ideVec = timeSlice.second;
+
+                double nElec = 0;
+                for (size_t j =0; j < ideVec.size(); j++){
+
+                    nElec = nElec + ideVec[j].numElectrons;
+                
+                }
+                
+                nElecs[i] = nElec;
+
+                waveform->SetBinContent(timeSlice.first-7295, nElec);
+
+                nElectrons->Fill(nElec);
+
+                i++;
             }
 
-            std::cout << "RMS total: " << ADCs->GetRMS() << std::endl;
 
             double rms = 0;
-            if (ADCs->Integral() != 0){
+            if (nElectrons->Integral() != 0){
                 Double_t par[3];
                 double xq = 0.5;
-                ADCs->GetQuantiles(1,&par[0],&xq);
+                nElectrons->GetQuantiles(1,&par[0],&xq);
                 xq = 0.5 - 0.34;
-                ADCs->GetQuantiles(1,&par[1],&xq);
+                nElectrons->GetQuantiles(1,&par[1],&xq);
                 xq = 0.5 + 0.34;
-                ADCs->GetQuantiles(1,&par[2],&xq);
+                nElectrons->GetQuantiles(1,&par[2],&xq);
                 rms = sqrt((pow(par[2]-par[0],2) + pow(par[1]-par[0],2))/2.);
                 Double_t mean = par[0];
             }
 
-            TString ADCsName = Form("ADCs_channel%i", channel);
-            ADCs->SetName(ADCsName);
+            TString nElectronsName = Form("nElectrons_channel%i", channel);
+            nElectrons->SetName(nElectronsName);
             std::cout << "RMS truncated " << rms << std::endl;
 
             TString frqname = Form("FrequencyWfm_channel%i", channel);

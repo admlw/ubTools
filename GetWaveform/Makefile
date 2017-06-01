@@ -25,7 +25,11 @@ LDFLAGS=$$(root-config --libs) \
 GetWaveform: GetWaveform.cc
 		@$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 
-all: GetWaveform
+GetSimChan: GetSimChan.cc
+		@$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
+
+all: GetWaveform GetSimChan
 
 clean:
 	rm *.o GetWaveform
+	rm *.o GetSimChan
