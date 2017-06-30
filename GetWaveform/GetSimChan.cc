@@ -44,9 +44,21 @@ int main(int argv, char** argc){
 
     TFile f_output(argc[2], "UPDATE");
 
-    int selectedRun = atoi(argc[4]);
-    int selectedEvent = atoi(argc[5]);
-    int selectedChannel = atoi(argc[6]);
+    int selectedRun    = atoi(argc[4]);
+    
+    int minimumEvent   = atoi(argc[5]);
+    int maximumEvent   = atoi(argc[6]);
+
+    // construct a list of channel numbers to run over
+    int minimumChannel = atoi(argc[7]);
+    int maximumChannel = atoi(argc[8]);
+
+    std::vector<int> channelList;
+    for (int i = minimumChannel; i <= maximumChannel; i++){
+
+        channelList.push_back(i);
+
+    }
 
     TH1D* waveform = new TH1D("waveform", "", 9594, 0, 9594);
     TH1* frqspace = 0;
@@ -64,7 +76,9 @@ int main(int argv, char** argc){
         int run = ev.eventAuxiliary().run();
         int event = ev.eventAuxiliary().event();
 
-        if (selectedRun != run || selectedEvent != event) continue;
+        std::cout << event << std::endl;
+
+        if (selectedRun != run || (event < minimumEvent || event > maximumEvent)) continue;
 
         const auto& simChHandle = ev.getValidHandle< std::vector<sim::SimChannel> >(SimChanTag);
 
@@ -72,9 +86,9 @@ int main(int argv, char** argc){
 
             int channel = simCh.Channel();
 
-            if (selectedChannel != channel) continue;
+            if (channel < minimumChannel || channel > maximumChannel) continue;
 
-            TString chanNo = Form("TimeWfm_channel%i", channel);
+            TString chanNo = Form("Event_%i_TimeWfm_channel%i", event, channel);
             waveform->SetName(chanNo);
 
             auto const& tdcidemap = simCh.TDCIDEMap();
@@ -117,27 +131,26 @@ int main(int argv, char** argc){
                 Double_t mean = par[0];
             }
 
-            TString nElectronsName = Form("nElectrons_channel%i", channel);
+            TString nElectronsName = Form("Event_%i_nElectrons_channel%i", event, channel);
             nElectrons->SetName(nElectronsName);
-            std::cout << "RMS truncated " << rms << std::endl;
 
-            TString frqname = Form("FrequencyWfm_channel%i", channel);
+            TString frqname = Form("Event_%i_FrequencyWfm_channel%i", event, channel);
             frqspace = (TH1*)waveform->FFT(frqspace, "MAG RTC M");
             frqspace->SetName(frqname);
             
-            TString hAverageName = Form("FreqAvg_channel%i", channel);
+            TString hAverageName = Form("Event_%i_FreqAvg_channel%i", event, channel);
             hAverage = average(frqspace, hAverage, 10);
             hAverage->SetName(hAverageName);
 
 
             f_output.cd();
+            waveform->Write();
             frqspace->Write();
+            hAverage->Write();
+            nElectrons->Write();
 
         }
-        break;
     }
-    f_output.cd();
-    f_output.Write();
     f_output.Close();
 
 }

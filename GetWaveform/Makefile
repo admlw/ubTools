@@ -28,8 +28,12 @@ GetWaveform: GetWaveform.cc
 GetSimChan: GetSimChan.cc
 		@$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 
-all: GetWaveform GetSimChan
+GetWire: GetWire.cc
+	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
+
+all: GetWaveform GetSimChan GetWire
 
 clean:
 	rm *.o GetWaveform
 	rm *.o GetSimChan
+	rm *.o GetWire

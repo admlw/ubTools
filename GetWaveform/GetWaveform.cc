@@ -45,13 +45,26 @@ int main(int argv, char** argc){
     TFile f_output(argc[2], "UPDATE");
 
     int selectedRun = atoi(argc[4]);
-    int selectedEvent = atoi(argc[5]);
-    int selectedChannel = atoi(argc[6]);
+    
+    int minimumEvent = atoi(argc[5]);
+    int maximumEvent = atoi(argc[6]);
+
+    // construct a list of channel numbers to run over
+    int minimumChannel = atoi(argc[7]);
+    int maximumChannel = atoi(argc[8]);
+
+    std::vector<int> channelList;
+    for (int i = minimumChannel; i <= maximumChannel; i++){
+
+        channelList.push_back(i);
+
+    }
+    
 
     TH1D* waveform = new TH1D("waveform", "", 6400, 0, 6400);
     TH1* frqspace = 0;
     TH1D* hAverage = new TH1D("hAverage", "", 6400/binSize, 0, 6400);
-    TH1D* ADCs = new TH1D("ADCs", "", 400, -200, 200);
+    TH1D* ADCs = new TH1D("ADCs", "", 4000, -2000, 2000);
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -64,7 +77,10 @@ int main(int argv, char** argc){
         int run = ev.eventAuxiliary().run();
         int event = ev.eventAuxiliary().event();
 
-        if (selectedRun != run || selectedEvent != event) continue;
+        if (/*selectedRun != run ||*/ (event < minimumEvent || event > maximumEvent)) continue;
+
+        TString dirFileName = Form("Event_%i", event);
+        f_output.mkdir(dirFileName);
 
         const auto& rawDHandle = ev.getValidHandle< std::vector<raw::RawDigit> >(wcRawDTag);
 
@@ -72,14 +88,14 @@ int main(int argv, char** argc){
 
             int channel = rawD.Channel();
 
-            if (selectedChannel != channel) continue;
+            if (channel < minimumChannel || channel > maximumChannel) continue;
 
-            TString chanNo = Form("TimeWfm_channel%i", channel);
+            TString chanNo = Form("Event_%i_TimeWfm_channel%i", event, channel);
             waveform->SetName(chanNo);
 
             for (size_t i = 0; i < 6400; i++){
-                waveform->SetBinContent(i, rawD.ADC(i)-rawD.GetPedestal());
-                ADCs->Fill(rawD.ADC(i)-rawD.GetPedestal());
+                waveform->SetBinContent(i, rawD.ADC(i)/*-rawD.GetPedestal()*/);
+                ADCs->Fill(rawD.ADC(i)/*-rawD.GetPedestal()*/);
             }
 
             std::cout << "RMS total: " << ADCs->GetRMS() << std::endl;
@@ -97,27 +113,27 @@ int main(int argv, char** argc){
                 Double_t mean = par[0];
             }
 
-            TString ADCsName = Form("ADCs_channel%i", channel);
+            TString ADCsName = Form("Event_%i_ADCs_channel%i", event, channel);
             ADCs->SetName(ADCsName);
             std::cout << "RMS truncated " << rms << std::endl;
 
-            TString frqname = Form("FrequencyWfm_channel%i", channel);
+            TString frqname = Form("Event_%i_FrequencyWfm_channel%i", event, channel);
             frqspace = (TH1*)waveform->FFT(frqspace, "MAG RTC M");
             frqspace->SetName(frqname);
             
-            TString hAverageName = Form("FreqAvg_channel%i", channel);
+            TString hAverageName = Form("Event_%i_FreqAvg_channel%i", event, channel);
             hAverage = average(frqspace, hAverage, 10);
             hAverage->SetName(hAverageName);
 
 
-            f_output.cd();
+            f_output.cd(dirFileName);
+            waveform->Write();
             frqspace->Write();
+            hAverage->Write();
+            ADCs->Write();
 
         }
-        break;
     }
-    f_output.cd();
-    f_output.Write();
     f_output.Close();
 
 }
