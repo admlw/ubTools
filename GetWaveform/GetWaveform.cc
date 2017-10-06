@@ -1,9 +1,9 @@
 #include "GetWaveform.h"
 
-TH1D* average(TH1* h, TH1D* hAverage, int binSize){
+TH1D* average(TH1* h, TH1D* hAverage, int binSize, int nTicks){
     int counter = 0;
     double average = 0;
-    for (int i = 0; i < 6400; i= i+binSize){
+    for (int i = 0; i < nTicks; i= i+binSize){
         average = 0;
         for (int j = 0; j < binSize; j++){
             average = average + h->GetBinContent(i+j);
@@ -53,6 +53,8 @@ int main(int argv, char** argc){
     int minimumChannel = atoi(argc[7]);
     int maximumChannel = atoi(argc[8]);
 
+    int nTicks = atoi(argc[9]);
+
     std::vector<int> channelList;
     for (int i = minimumChannel; i <= maximumChannel; i++){
 
@@ -61,9 +63,9 @@ int main(int argv, char** argc){
     }
     
 
-    TH1D* waveform = new TH1D("waveform", "", 6400, 0, 6400);
+    TH1D* waveform = new TH1D("waveform", "", nTicks, 0, nTicks);
     TH1* frqspace = 0;
-    TH1D* hAverage = new TH1D("hAverage", "", 6400/binSize, 0, 6400);
+    TH1D* hAverage = new TH1D("hAverage", "", nTicks/binSize, 0, nTicks);
     TH1D* ADCs = new TH1D("ADCs", "", 4000, -2000, 2000);
 
     ///////////////////////////////////////////////////////////////////////////
@@ -93,11 +95,12 @@ int main(int argv, char** argc){
             TString chanNo = Form("Event_%i_TimeWfm_channel%i", event, channel);
             waveform->SetName(chanNo);
 
-            for (size_t i = 0; i < 6400; i++){
+            for (size_t i = 0; i < nTicks; i++){
                 waveform->SetBinContent(i, rawD.ADC(i)/*-rawD.GetPedestal()*/);
                 ADCs->Fill(rawD.ADC(i)/*-rawD.GetPedestal()*/);
             }
 
+            std::cout << "channel: " << channel << std::endl;
             std::cout << "RMS total: " << ADCs->GetRMS() << std::endl;
 
             double rms = 0;
@@ -118,11 +121,11 @@ int main(int argv, char** argc){
             std::cout << "RMS truncated " << rms << std::endl;
 
             TString frqname = Form("Event_%i_FrequencyWfm_channel%i", event, channel);
-            frqspace = (TH1*)waveform->FFT(frqspace, "MAG RTC M");
+            frqspace = (TH1*)waveform->FFT(frqspace, "MAG");
             frqspace->SetName(frqname);
             
             TString hAverageName = Form("Event_%i_FreqAvg_channel%i", event, channel);
-            hAverage = average(frqspace, hAverage, 10);
+            hAverage = average(frqspace, hAverage, 10, nTicks);
             hAverage->SetName(hAverageName);
 
 
