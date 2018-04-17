@@ -1,5 +1,7 @@
 #!/bin/bash
 
+## Adam Lister (a.lister1@lancaster.ac.uk)
+
 usage() { printf "This script takes an input sam definition, prestages a selected number of files and returns a list of files to the user. \nUsage is ./getFileList <options> with \n -i: input SAM definition \n -n: number of files \n -o: output file list \n"; exit 1; }
 
 ## setup variables
@@ -38,9 +40,10 @@ echo ">> Input definition name: " ${i}
 echo ">> Output file: " ${o}
 echo ">> Number of files: " ${n}
 
+export time_stamp=`date +%s`
 export creation_time=`date "+%y%m%d%H%M%S"`
 export project_name=${USER}"_"${i}"_"${n}"files_"$creation_time
-export tmp_filegrab=temp_filegrab.list
+export tmp_filegrab=temp_filegrab_"${time_stamp}".list
 export output_filename=${o}
 
 echo " "

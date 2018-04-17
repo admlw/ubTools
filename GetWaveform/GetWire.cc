@@ -79,6 +79,7 @@ int main(int argv, char** argc){
 
         if (/*selectedRun != run ||*/ (event < minimumEvent || event > maximumEvent)) continue;
 
+        std::cout << "Running over event " << event << std::endl;
         TString dirFileName = Form("Event_%i", event);
         f_output.mkdir(dirFileName);
 
@@ -90,6 +91,7 @@ int main(int argv, char** argc){
 
             if (channel < minimumChannel || channel > maximumChannel) continue;
 
+            std::cout << "Getting information for channel " << channel << " " << minimumChannel << " " << maximumChannel << std::endl;
             TString chanNo = Form("Event_%i_TimeWfm_channel%i", event, channel);
             waveform->SetName(chanNo);
 

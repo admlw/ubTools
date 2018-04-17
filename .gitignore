@@ -2,3 +2,6 @@
 *.log
 *.txt
 *.nfs*
+*.pdf
+getDbRunInfo/
+getDataInfo.py

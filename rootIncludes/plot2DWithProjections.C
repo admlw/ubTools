@@ -1,3 +1,5 @@
+#include "TPad.h"
+
 void plot2DWithProjections(TH2D* h2, TString title){
   TCanvas *c1 = new TCanvas("c1", "c1",600,600);
   gStyle->SetOptStat(0);
@@ -9,12 +11,12 @@ void plot2DWithProjections(TH2D* h2, TString title){
   centerPad->SetTopMargin(0.025);
   centerPad->Draw();
   
-  rightPad = new TPad("rightPad", "rightPad",0.75,0.0,1.0,0.75);
+  TPad *rightPad = new TPad("rightPad", "rightPad",0.75,0.0,1.0,0.75);
   rightPad->SetTopMargin(0.025);
   rightPad->SetLeftMargin(0.035);
   rightPad->Draw();
   
-  topPad = new TPad("topPad", "topPad",0.0,0.75,0.75,1.0);
+  TPad *topPad = new TPad("topPad", "topPad",0.0,0.75,0.75,1.0);
   topPad->SetRightMargin(0.025);
   topPad->SetBottomMargin(0.035);
   topPad->Draw();
@@ -34,6 +36,7 @@ void plot2DWithProjections(TH2D* h2, TString title){
   projh2X->GetYaxis()->SetLabelSize(0.10);
   projh2X->SetNdivisions(5,"y");
   projh2X->GetXaxis()->SetLabelOffset(1000);
+  projh2X->GetYaxis()->SetRangeUser(0,projh2X->GetMaximum()*0.5);
   projh2X->Draw("bar");
 
   rightPad->cd();
